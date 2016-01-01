@@ -13,6 +13,7 @@ OPS = {
         '*': TIMES,
         '/': DIVIDED_BY
       }
+OP_TYPES = {v:k for (k,v) in OPS.iteritems()}
 
 class Token(object):
     def __init__(self, type, value):
@@ -104,29 +105,22 @@ class Interpreter(object):
         # set current token to first token from input
         self.current_token = self.get_next_token()
 
-        # expect current token to be a single-digit integer
-        left = self.current_token
+        result = self.current_token.value
         self.eat(INTEGER)
+        while self.current_token.type in OP_TYPES:
+            op = self.current_token
+            self.eat(op.type)
+            right = self.current_token
+            self.eat(INTEGER)
 
-        # then expect a '+' token
-        op = self.current_token
-        self.eat(op.type)
-
-        # then expect a single-digit integer
-        right = self.current_token
-        self.eat(INTEGER)
-
-        # self.current_token should now be EOF
-
-        # Now check the operation to find out what to do
-        if op.type == PLUS:
-            result = left.value + right.value
-        elif op.type == MINUS:
-            result = left.value - right.value
-        elif op.type == TIMES:
-            result = left.value * right.value
-        elif op.type == DIVIDED_BY:
-            result = left.value / right.value
+            if op.type == PLUS:
+                result = result + right.value
+            elif op.type == MINUS:
+                result = result - right.value
+            elif op.type == TIMES:
+                result = result * right.value
+            elif op.type == DIVIDED_BY:
+                result = result / right.value
 
         return result
 

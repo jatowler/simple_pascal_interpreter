@@ -50,6 +50,12 @@ class Interpreter(object):
         # get the current character and decide what to do with it
         current_char = text[self.pos]
 
+        while current_char.isspace():
+            self.pos += 1
+            if self.pos > (len(text) - 1):
+                return Token(EOF, None)
+            current_char = text[self.pos]
+
         if current_char.isdigit():
             num_string = ''
             while current_char.isdigit():

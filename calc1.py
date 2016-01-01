@@ -2,11 +2,12 @@
 
 INTEGER = 'INTEGER'
 PLUS = 'PLUS'
+MINUS = 'MINUS'
 EOF = 'EOF'
 
 class Token(object):
     def __init__(self, type, value):
-        # token type: INTEGER, PLUS, EOF
+        # token type: INTEGER, PLUS, MINUS, EOF
         self.type = type
         # token value: [0-9+] or None
         self.value = value
@@ -40,7 +41,7 @@ class Interpreter(object):
         '''Consume next character.'''
         self.pos += 1
 
-        if self.pos > (len(text) - 1):
+        if self.pos > (len(self.text) - 1):
             self.current_char = None
         else:
             self.current_char = self.text[self.pos]
@@ -75,6 +76,10 @@ class Interpreter(object):
                 self.advance()
                 return Token(PLUS, '+')
 
+            if self.current_char == '-':
+                self.advance()
+                return Token(MINUS, '-')
+
             self.error()
 
         return Token(EOF, None)
@@ -97,7 +102,10 @@ class Interpreter(object):
 
         # then expect a '+' token
         op = self.current_token
-        self.eat(PLUS)
+        if op.type == PLUS:
+            self.eat(PLUS)
+        else:
+            self.eat(MINUS)
 
         # then expect a single-digit integer
         right = self.current_token
@@ -105,8 +113,12 @@ class Interpreter(object):
 
         # self.current_token should now be EOF
 
-        # Now we know we're adding, so just do it
-        result = left.value + right.value
+        # Now check the operation to find out what to do
+        if op.type == PLUS:
+            result = left.value + right.value
+        else:
+            result = left.value - right.value
+
         return result
 
 def main():

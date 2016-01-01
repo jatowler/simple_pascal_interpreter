@@ -13,7 +13,6 @@ OPS = {
         '*': MUL,
         '/': DIV
       }
-OP_TYPES = {v:k for (k,v) in OPS.iteritems()}
 
 class Token(object):
     def __init__(self, type, value):
@@ -104,34 +103,43 @@ class Interpreter(object):
             self.error()
 
     def factor(self):
-        '''Return an INTEGER token value.
-
-        factor : INTEGER
-        '''
+        '''factor : INTEGER'''
         token = self.current_token
         self.eat(INTEGER)
         return token.value
 
+    def term(self):
+        '''term : factor ((MUL | DIV factor)*'''
+        result = self.factor()
+        
+        while self.current_token.type in (MUL, DIV):
+            token = self.current_token
+            self.eat(token.type)
+            
+            if token.type == MUL:
+                result = result * self.factor()
+            elif token.type == DIV:
+                result = result / self.factor()
+
+        return result
+
     def expr(self):
         '''Parser/interpreter
         
-        expr   : factor ((PLUS | MINUS | MUL | DIV) factor)*
+        expr   : term ((PLUS | MINUS) term)*
+        term   : factor ((MUL | DIV) factor)*
         factor : INTEGER
         '''
         # set current token to first token from input
-        result = self.factor()
-        while self.current_token.type in OP_TYPES:
+        result = self.term()
+        while self.current_token.type in (PLUS, MINUS):
             op = self.current_token
             self.eat(op.type)
 
             if op.type == PLUS:
-                result = result + self.factor()
+                result = result + self.term()
             elif op.type == MINUS:
-                result = result - self.factor()
-            elif op.type == MUL:
-                result = result * self.factor()
-            elif op.type == DIV:
-                result = result / self.factor()
+                result = result - self.term()
 
         return result
 

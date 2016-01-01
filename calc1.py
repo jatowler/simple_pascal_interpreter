@@ -31,50 +31,53 @@ class Interpreter(object):
 
         # current token
         self.current_token = None
+        self.current_char = self.text[self.pos]
 
     def error(self):
         raise Exception('Error parsing input')
+
+    def advance(self):
+        '''Consume next character.'''
+        self.pos += 1
+
+        if self.pos > (len(text) - 1):
+            self.current_char = None
+        else:
+            self.current_char = self.text[self.pos]
+
+    def skip_whitespace(self):
+        while self.current_char is not None and self.current_char.isspace():
+            self.advance()
+
+    def consume_integer(self):
+        '''Return a (potentially multidigit) integer'''
+        result = ''
+        while self.current_char is not None and self.current_char.isdigit():
+            result += self.current_char
+            self.advance()
+
+        return int(result)
 
     def get_next_token(self):
         '''Lexical analyzer (tokenizer)
 
         Break a sentence apart into tokens, one at a time.
         '''
-        text = self.text
+        while self.current_char is not None:
+            if self.current_char.isspace():
+                self.skip_whitespace()
+                continue
 
-        # if self.pos beyond the end of self.text,
-        # return EOF
-        if self.pos > (len(text) - 1):
-            return Token(EOF, None)
+            if self.current_char.isdigit():
+                return Token(INTEGER, self.consume_integer())
 
-        # get the current character and decide what to do with it
-        current_char = text[self.pos]
+            if self.current_char == '+':
+                self.advance()
+                return Token(PLUS, '+')
 
-        while current_char.isspace():
-            self.pos += 1
-            if self.pos > (len(text) - 1):
-                return Token(EOF, None)
-            current_char = text[self.pos]
+            self.error()
 
-        if current_char.isdigit():
-            num_string = ''
-            while current_char.isdigit():
-                num_string += current_char
-                self.pos += 1
-                if self.pos > (len(text) - 1):
-                    break
-                current_char = text[self.pos]
-
-            token = Token(INTEGER, int(num_string))
-            return token
-        
-        if current_char == '+':
-            token = Token(PLUS, current_char)
-            self.pos += 1
-            return token
-
-        # We didn't recognize this token
-        self.error()
+        return Token(EOF, None)
 
     def eat(self, token_type):
         '''Eat a token of the expected type, or die.'''

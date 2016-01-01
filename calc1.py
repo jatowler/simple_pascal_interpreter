@@ -3,15 +3,15 @@
 INTEGER = 'INTEGER'
 PLUS = 'PLUS'
 MINUS = 'MINUS'
-TIMES = 'TIMES'
-DIVIDED_BY = 'DIVIDED_BY'
+MUL = 'TIMES'
+DIV = 'DIVIDED_BY'
 EOF = 'EOF'
 
 OPS = {
         '+': PLUS,
         '-': MINUS,
-        '*': TIMES,
-        '/': DIVIDED_BY
+        '*': MUL,
+        '/': DIV
       }
 OP_TYPES = {v:k for (k,v) in OPS.iteritems()}
 
@@ -32,23 +32,17 @@ class Token(object):
     def __repr__(self):
         return self.__str__()
 
-class Interpreter(object):
+class Lexer(object):
     def __init__(self, text):
-        # client string input
         self.text = text
-
-        # index into self.text
         self.pos = 0
-
-        # current token
-        self.current_token = None
         self.current_char = self.text[self.pos]
 
     def error(self):
-        raise Exception('Error parsing input')
+        raise Exception('Invalid character')
 
     def advance(self):
-        '''Consume next character.'''
+        '''Advance self.pos and set self.current_char.'''
         self.pos += 1
 
         if self.pos > (len(self.text) - 1):
@@ -60,7 +54,7 @@ class Interpreter(object):
         while self.current_char is not None and self.current_char.isspace():
             self.advance()
 
-    def consume_integer(self):
+    def integer(self):
         '''Return a (potentially multidigit) integer'''
         result = ''
         while self.current_char is not None and self.current_char.isdigit():
@@ -68,7 +62,7 @@ class Interpreter(object):
             self.advance()
 
         return int(result)
-
+    
     def get_next_token(self):
         '''Lexical analyzer (tokenizer)
 
@@ -80,7 +74,7 @@ class Interpreter(object):
                 continue
 
             if self.current_char.isdigit():
-                return Token(INTEGER, self.consume_integer())
+                return Token(INTEGER, self.integer())
 
             if self.current_char in OPS:
                 token = Token(
@@ -93,37 +87,51 @@ class Interpreter(object):
 
         return Token(EOF, None)
 
+
+class Interpreter(object):
+    def __init__(self, lexer):
+        self.lexer = lexer
+        self.current_token = self.lexer.get_next_token()
+
+    def error(self):
+        raise Exception('Invalid syntax')
+
     def eat(self, token_type):
         '''Eat a token of the expected type, or die.'''
         if self.current_token.type == token_type:
-            self.current_token = self.get_next_token()
+            self.current_token = self.lexer.get_next_token()
         else:
             self.error()
 
-    def term(self):
-        '''Return an INTEGER token value.'''
+    def factor(self):
+        '''Return an INTEGER token value.
+
+        factor : INTEGER
+        '''
         token = self.current_token
         self.eat(INTEGER)
         return token.value
 
     def expr(self):
-        '''expr -> INTEGER PLUS INTEGER'''
+        '''Parser/interpreter
+        
+        expr   : factor ((PLUS | MINUS | MUL | DIV) factor)*
+        factor : INTEGER
+        '''
         # set current token to first token from input
-        self.current_token = self.get_next_token()
-
-        result = self.term()
+        result = self.factor()
         while self.current_token.type in OP_TYPES:
             op = self.current_token
             self.eat(op.type)
 
             if op.type == PLUS:
-                result = result + self.term()
+                result = result + self.factor()
             elif op.type == MINUS:
-                result = result - self.term()
-            elif op.type == TIMES:
-                result = result * self.term()
-            elif op.type == DIVIDED_BY:
-                result = result / self.term()
+                result = result - self.factor()
+            elif op.type == MUL:
+                result = result * self.factor()
+            elif op.type == DIV:
+                result = result / self.factor()
 
         return result
 
@@ -137,7 +145,8 @@ def main():
         if not text:
             continue
 
-        interpreter = Interpreter(text)
+        lexer = Lexer(text)
+        interpreter = Interpreter(lexer)
         result = interpreter.expr()
         print(result)
 

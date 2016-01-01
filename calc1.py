@@ -3,7 +3,16 @@
 INTEGER = 'INTEGER'
 PLUS = 'PLUS'
 MINUS = 'MINUS'
+TIMES = 'TIMES'
+DIVIDED_BY = 'DIVIDED_BY'
 EOF = 'EOF'
+
+OPS = {
+        '+': PLUS,
+        '-': MINUS,
+        '*': TIMES,
+        '/': DIVIDED_BY
+      }
 
 class Token(object):
     def __init__(self, type, value):
@@ -72,13 +81,12 @@ class Interpreter(object):
             if self.current_char.isdigit():
                 return Token(INTEGER, self.consume_integer())
 
-            if self.current_char == '+':
+            if self.current_char in OPS:
+                token = Token(
+                        OPS[self.current_char],
+                        self.current_char)
                 self.advance()
-                return Token(PLUS, '+')
-
-            if self.current_char == '-':
-                self.advance()
-                return Token(MINUS, '-')
+                return token
 
             self.error()
 
@@ -102,10 +110,7 @@ class Interpreter(object):
 
         # then expect a '+' token
         op = self.current_token
-        if op.type == PLUS:
-            self.eat(PLUS)
-        else:
-            self.eat(MINUS)
+        self.eat(op.type)
 
         # then expect a single-digit integer
         right = self.current_token
@@ -116,8 +121,12 @@ class Interpreter(object):
         # Now check the operation to find out what to do
         if op.type == PLUS:
             result = left.value + right.value
-        else:
+        elif op.type == MINUS:
             result = left.value - right.value
+        elif op.type == TIMES:
+            result = left.value * right.value
+        elif op.type == DIVIDED_BY:
+            result = left.value / right.value
 
         return result
 

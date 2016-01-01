@@ -100,27 +100,30 @@ class Interpreter(object):
         else:
             self.error()
 
+    def term(self):
+        '''Return an INTEGER token value.'''
+        token = self.current_token
+        self.eat(INTEGER)
+        return token.value
+
     def expr(self):
         '''expr -> INTEGER PLUS INTEGER'''
         # set current token to first token from input
         self.current_token = self.get_next_token()
 
-        result = self.current_token.value
-        self.eat(INTEGER)
+        result = self.term()
         while self.current_token.type in OP_TYPES:
             op = self.current_token
             self.eat(op.type)
-            right = self.current_token
-            self.eat(INTEGER)
 
             if op.type == PLUS:
-                result = result + right.value
+                result = result + self.term()
             elif op.type == MINUS:
-                result = result - right.value
+                result = result - self.term()
             elif op.type == TIMES:
-                result = result * right.value
+                result = result * self.term()
             elif op.type == DIVIDED_BY:
-                result = result / right.value
+                result = result / self.term()
 
         return result
 

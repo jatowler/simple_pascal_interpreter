@@ -5,13 +5,17 @@ PLUS = 'PLUS'
 MINUS = 'MINUS'
 MUL = 'TIMES'
 DIV = 'DIVIDED_BY'
+LPAREN = '('
+RPAREN = ')'
 EOF = 'EOF'
 
 OPS = {
         '+': PLUS,
         '-': MINUS,
         '*': MUL,
-        '/': DIV
+        '/': DIV,
+        '(': LPAREN,
+        ')': RPAREN
       }
 
 class Token(object):
@@ -103,10 +107,16 @@ class Interpreter(object):
             self.error()
 
     def factor(self):
-        '''factor : INTEGER'''
+        '''factor : INTEGER | LPAREN expr RPAREN'''
         token = self.current_token
-        self.eat(INTEGER)
-        return token.value
+        if token.type == INTEGER:
+            self.eat(INTEGER)
+            return token.value
+        elif token.type == LPAREN:
+            self.eat(LPAREN)
+            result = self.expr()
+            self.eat(RPAREN)
+            return result
 
     def term(self):
         '''term : factor ((MUL | DIV factor)*'''
@@ -128,7 +138,7 @@ class Interpreter(object):
         
         expr   : term ((PLUS | MINUS) term)*
         term   : factor ((MUL | DIV) factor)*
-        factor : INTEGER
+        factor : INTEGER | LPAREN expr RPAREN
         '''
         # set current token to first token from input
         result = self.term()

@@ -3,14 +3,19 @@
 import token as spi_token
 
 class AST(object):
-    pass
-
+    pass 
 class BinOp(AST):
     def __init__(self, left, op, right):
         self.left = left
         self.op = op
         self.token = op
         self.right = right
+
+class UnaryOp(AST):
+    def __init__(self, op, expr):
+        self.op = op
+        self.token = op
+        self.expr = expr
 
 class Num(AST):
     def __init__(self, token):
@@ -32,9 +37,17 @@ class Parser(object):
             self.error()
 
     def factor(self):
-        '''factor : INTEGER | LPAREN expr RPAREN'''
+        '''factor : (PLUS | MINUS) factor | INTEGER | LPAREN expr RPAREN'''
         token = self.current_token
-        if token.type == spi_token.INTEGER:
+        if token.type == spi_token.PLUS:
+            self.eat(spi_token.PLUS)
+            node = UnaryOp(token, self.factor())
+            return node
+        elif token.type == spi_token.MINUS:
+            self.eat(spi_token.MINUS)
+            node = UnaryOp(token, self.factor())
+            return node
+        elif token.type == spi_token.INTEGER:
             self.eat(spi_token.INTEGER)
             return Num(token)
         elif token.type == spi_token.LPAREN:
